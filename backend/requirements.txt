@@ -1,0 +1,11 @@
+fastapi
+hypercorn
+sqlalchemy
+pydantic
+pydantic-settings
+PyJWT
+python-multipart
+requests
+pypdf
+python-dotenv
+email-validator
