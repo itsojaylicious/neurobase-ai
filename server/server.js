@@ -72,4 +72,4 @@ connectDB().then(() => {
   });
 });
 
-module.exports = { app, io };
+module.exports = app;
