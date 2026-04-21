@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, FileText, Brain, TrendingUp, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { BookOpen, FileText, Brain, TrendingUp, Sparkles, ArrowRight, Loader2, Layers, StickyNote, Bell, Users } from 'lucide-react';
 import api from '../api/client';
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reminders, setReminders] = useState([]);
 
   useEffect(() => {
     api.get('/progress/dashboard')
       .then(res => setData(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
+
+    // Load smart notifications
+    api.get('/class-analytics/student')
+      .then(res => setReminders(res.data.reminders || []))
+      .catch(() => {});
   }, []);
 
   if (loading) return (
@@ -133,12 +139,32 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Smart Notifications */}
+      {reminders.length > 0 && (
+        <div className="glass-panel p-5 border-yellow-500/20 bg-yellow-900/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Bell className="w-5 h-5 text-yellow-400" />
+            <h3 className="font-semibold text-white">Smart Reminders</h3>
+          </div>
+          <div className="space-y-2">
+            {reminders.map((r, i) => (
+              <p key={i} className="text-sm text-gray-300 bg-gray-800/40 p-3 rounded-lg">{r}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Link to="/classrooms" className="glass-panel p-5 hover:border-red-500/30 transition-all group text-center">
+          <Users className="w-8 h-8 text-red-400 mx-auto mb-2" />
+          <p className="font-medium text-white">Live Classes</p>
+          <p className="text-xs text-gray-500 mt-1">Join or teach live</p>
+        </Link>
         <Link to="/topics" className="glass-panel p-5 hover:border-primary-500/30 transition-all group text-center">
           <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-2" />
           <p className="font-medium text-white">Generate Topic</p>
-          <p className="text-xs text-gray-500 mt-1">AI builds a curriculum for you</p>
+          <p className="text-xs text-gray-500 mt-1">AI builds a curriculum</p>
         </Link>
         <Link to="/documents" className="glass-panel p-5 hover:border-emerald-500/30 transition-all group text-center">
           <FileText className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
@@ -148,7 +174,17 @@ export default function DashboardPage() {
         <Link to="/chat" className="glass-panel p-5 hover:border-purple-500/30 transition-all group text-center">
           <Brain className="w-8 h-8 text-purple-400 mx-auto mb-2" />
           <p className="font-medium text-white">Ask AI Tutor</p>
-          <p className="text-xs text-gray-500 mt-1">Search your knowledge base</p>
+          <p className="text-xs text-gray-500 mt-1">Search your knowledge</p>
+        </Link>
+        <Link to="/flashcards" className="glass-panel p-5 hover:border-amber-500/30 transition-all group text-center">
+          <Layers className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+          <p className="font-medium text-white">Flashcards</p>
+          <p className="text-xs text-gray-500 mt-1">Spaced repetition review</p>
+        </Link>
+        <Link to="/notes" className="glass-panel p-5 hover:border-blue-500/30 transition-all group text-center">
+          <StickyNote className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+          <p className="font-medium text-white">Notes</p>
+          <p className="text-xs text-gray-500 mt-1">Write & enhance with AI</p>
         </Link>
       </div>
     </div>

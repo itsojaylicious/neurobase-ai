@@ -1,14 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MessageSquare, BookOpen, FileText, Brain, Target, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, BookOpen, FileText, Brain, Target, BarChart3, LogOut, Search, Layers, StickyNote, Settings, Users } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/classrooms', icon: Users, label: 'Classrooms' },
   { path: '/chat', icon: MessageSquare, label: 'AI Chat' },
+  { path: '/search', icon: Search, label: 'Search' },
   { path: '/topics', icon: BookOpen, label: 'Topics' },
   { path: '/documents', icon: FileText, label: 'Documents' },
+  { path: '/notes', icon: StickyNote, label: 'Notes' },
+  { path: '/flashcards', icon: Layers, label: 'Flashcards' },
   { path: '/quiz', icon: Brain, label: 'Quiz' },
   { path: '/gaps', icon: Target, label: 'Knowledge Gaps' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Sidebar({ onLogout }) {
