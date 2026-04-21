@@ -10,6 +10,14 @@ import DocumentsPage from './pages/DocumentsPage';
 import QuizPage from './pages/QuizPage';
 import GapsPage from './pages/GapsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import FlashcardsPage from './pages/FlashcardsPage';
+import SearchPage from './pages/SearchPage';
+import NotesPage from './pages/NotesPage';
+import SettingsPage from './pages/SettingsPage';
+import ClassroomsPage from './pages/ClassroomsPage';
+import LiveClassPage from './pages/LiveClassPage';
+import LectureReviewPage from './pages/LectureReviewPage';
+import ClassAnalyticsPage from './pages/ClassAnalyticsPage';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -32,13 +40,21 @@ function App() {
       <Layout onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/classrooms" element={<ClassroomsPage />} />
+          <Route path="/classrooms/live/:id" element={<LiveClassPage />} />
+          <Route path="/classrooms/review/:id" element={<LectureReviewPage />} />
+          <Route path="/classrooms/analytics/:id" element={<ClassAnalyticsPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/topics" element={<TopicsPage />} />
           <Route path="/topics/:id" element={<TopicDetailPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/notes" element={<NotesPage />} />
+          <Route path="/flashcards" element={<FlashcardsPage />} />
           <Route path="/quiz" element={<QuizPage />} />
           <Route path="/gaps" element={<GapsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Layout>
     </Router>
