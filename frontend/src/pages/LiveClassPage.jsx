@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 
-const SOCKET_URL = 'http://localhost:8000';
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : (import.meta.env.PROD ? window.location.origin + '/_/server' : 'http://localhost:8000');
 
 export default function LiveClassPage() {
   const { id: classroomId } = useParams();

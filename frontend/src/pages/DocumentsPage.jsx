@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, UploadCloud, Loader2, Trash2, File, Clock, Eye, EyeOff, BookOpen, Users, Download, AlertCircle } from 'lucide-react';
 import api from '../api/client';
 
-const API = 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/_/server/api' : 'http://localhost:8000/api');
 
 export default function DocumentsPage() {
   const [documents, setDocuments]       = useState([]);
