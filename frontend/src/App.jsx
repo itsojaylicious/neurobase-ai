@@ -22,6 +22,12 @@ import ClassAnalyticsPage from './pages/ClassAnalyticsPage';
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
 
+  // Apply saved theme immediately on startup
+  useState(() => {
+    const theme = localStorage.getItem('nb_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  });
+
   const handleLogin = (newToken) => {
     setToken(newToken);
   };

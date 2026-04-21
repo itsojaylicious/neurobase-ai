@@ -16,7 +16,7 @@ export default function ClassAnalyticsPage() {
 
   const loadAnalytics = async () => {
     try {
-      const res = await api.get(`/class-analytics/classroom/${classroomId}`);
+      const res = await api.get(`/analytics/classroom/${classroomId}`);
       setData(res.data);
     } catch (e) {
       console.error(e);

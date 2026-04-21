@@ -35,7 +35,9 @@ export default function SettingsPage() {
       setDisplayName(res.data.display_name || '');
       setLearningStyle(res.data.learning_style || 'balanced');
       setRole(res.data.role || 'student');
-      setTheme(res.data.theme || 'dark');
+      const savedTheme = res.data.theme || localStorage.getItem('nb_theme') || 'dark';
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
     } catch (e) {
       console.error(e);
     }
@@ -57,19 +59,19 @@ export default function SettingsPage() {
       });
       showMessage('success', 'Profile updated successfully. Refresh if you changed your role.');
     } catch (e) {
-      showMessage('error', e.response?.data?.detail || 'Failed to update profile');
+      showMessage('error', e.response?.data?.message || 'Failed to update profile');
     }
     setSaving('');
   };
 
   const handleSaveTheme = async (newTheme) => {
     setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('nb_theme', newTheme);
     setSaving('theme');
     try {
-      await api.put('/settings/preferences', { theme: newTheme });
-      // Apply theme to document
-      document.documentElement.setAttribute('data-theme', newTheme);
-      showMessage('success', `Theme changed to ${newTheme}`);
+      await api.put('/settings/profile', { theme: newTheme });
+      showMessage('success', `Theme changed to ${newTheme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
     } catch (e) {
       showMessage('error', 'Failed to update theme');
     }
@@ -79,7 +81,7 @@ export default function SettingsPage() {
   const handleSaveApiKey = async () => {
     setSaving('apikey');
     try {
-      await api.put('/settings/api-key', { gemini_api_key: apiKey });
+      await api.put('/settings/profile', { gemini_api_key: apiKey });
       showMessage('success', 'API key updated');
       setApiKey('');
       await loadProfile();
@@ -105,7 +107,7 @@ export default function SettingsPage() {
       setCurrentPassword('');
       setNewPassword('');
     } catch (e) {
-      showMessage('error', e.response?.data?.detail || 'Failed to change password');
+      showMessage('error', e.response?.data?.message || 'Failed to change password');
     }
     setSaving('');
   };

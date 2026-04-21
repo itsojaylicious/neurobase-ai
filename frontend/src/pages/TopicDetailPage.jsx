@@ -12,7 +12,7 @@ export default function TopicDetailPage() {
   const [expandedId, setExpandedId] = useState(null);
 
   const fetchTopic = () => {
-    api.get(`/topic/${id}`)
+    api.get(`/topics/${id}`)
       .then(res => setTopic(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -23,11 +23,12 @@ export default function TopicDetailPage() {
   const handleGenerateNotes = async (subtopicId) => {
     setGeneratingId(subtopicId);
     try {
-      const res = await api.post('/topic/generate-notes', { subtopic_id: subtopicId });
+      const subtopic = topic.subtopics.find(s => (s._id || s.id)?.toString() === subtopicId?.toString());
+      const res = await api.post(`/topics/${id}/generate-notes`, { subtopicTitle: subtopic?.title || subtopicId });
       setTopic(prev => ({
         ...prev,
         subtopics: prev.subtopics.map(s =>
-          s.id === subtopicId ? { ...s, content: res.data.content } : s
+          (s._id || s.id)?.toString() === subtopicId?.toString() ? { ...s, content: res.data.notes } : s
         )
       }));
       setExpandedId(subtopicId);
@@ -72,64 +73,73 @@ export default function TopicDetailPage() {
       </div>
 
       <div className="space-y-3">
-        {topic.subtopics?.map((sub, index) => (
-          <div key={sub.id} className="glass-panel overflow-hidden">
+        {topic.subtopics?.map((sub, index) => {
+          const subId = sub._id || sub.id;
+          const hasFullNotes = sub.content && sub.content.length > 200;
+          return (
+          <div key={subId} className="glass-panel overflow-hidden">
             <div
               className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-700/20 transition-colors"
-              onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
+              onClick={() => setExpandedId(expandedId === subId ? null : subId)}
             >
               <div className="flex items-center gap-3">
                 <span className="w-7 h-7 rounded-lg bg-primary-600/20 flex items-center justify-center text-xs font-bold text-primary-400 shrink-0">
                   {index + 1}
                 </span>
                 <span className="font-medium text-gray-200">{sub.title}</span>
-                {sub.content && (
+                {hasFullNotes && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     Notes Ready
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {!sub.content && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleGenerateNotes(sub.id); }}
-                    disabled={generatingId === sub.id}
-                    className="secondary-btn flex items-center gap-1 text-xs"
-                  >
-                    {generatingId === sub.id ? (
-                      <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</>
-                    ) : (
-                      <><Sparkles className="w-3 h-3" /> Generate Notes</>
-                    )}
-                  </button>
-                )}
-                {expandedId === sub.id
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleGenerateNotes(subId); }}
+                  disabled={generatingId === subId}
+                  className="secondary-btn flex items-center gap-1 text-xs"
+                >
+                  {generatingId === subId ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Sparkles className="w-3 h-3" /> {hasFullNotes ? 'Regenerate' : 'Generate Notes'}</>
+                  )}
+                </button>
+                {expandedId === subId
                   ? <ChevronUp className="w-4 h-4 text-gray-500" />
                   : <ChevronDown className="w-4 h-4 text-gray-500" />
                 }
               </div>
             </div>
 
-            {expandedId === sub.id && sub.content && (
+            {expandedId === subId && hasFullNotes && (
               <div className="px-6 pb-5 border-t border-gray-700/50 pt-4 animate-fade-in">
                 <MarkdownRenderer content={sub.content} />
               </div>
             )}
-
-            {expandedId === sub.id && !sub.content && (
-              <div className="px-6 pb-5 border-t border-gray-700/50 pt-4 text-center animate-fade-in">
-                <p className="text-gray-500 text-sm">No notes generated yet. Click "Generate Notes" to create study material.</p>
+            {expandedId === subId && !hasFullNotes && (
+              <div className="px-6 pb-5 border-t border-gray-700/50 pt-4 animate-fade-in">
+                {(sub.description || sub.content) && (
+                  <p className="text-gray-400 text-sm mb-4 italic border-l-2 border-primary-500/40 pl-3">
+                    {sub.description || sub.content}
+                  </p>
+                )}
+                <div className="flex items-center gap-3 p-3 bg-primary-500/5 border border-primary-500/20 rounded-lg">
+                  <Sparkles className="w-4 h-4 text-primary-400 shrink-0" />
+                  <p className="text-gray-400 text-sm">Click <strong className="text-primary-400">"Generate Notes"</strong> to create comprehensive study material with examples, formulas, and practice questions.</p>
+                </div>
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Quiz CTA */}
       <div className="glass-panel p-6 text-center">
         <h3 className="text-lg font-semibold text-white mb-2 font-display">Ready to test your knowledge?</h3>
         <p className="text-gray-400 text-sm mb-4">Take a quiz on {topic.title} to assess your understanding</p>
-        <Link to={`/quiz?topic=${topic.id}`} className="primary-btn inline-flex">
+        <Link to={`/quiz?topic=${topic._id || topic.id}`} className="primary-btn inline-flex">
           <BookOpen className="w-5 h-5 mr-2" /> Take Quiz
         </Link>
       </div>

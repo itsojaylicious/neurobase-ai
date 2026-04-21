@@ -25,11 +25,11 @@ export default function NotesPage() {
   const loadData = async () => {
     try {
       const [notesRes, topicsRes] = await Promise.all([
-        api.get('/notes/'),
-        api.get('/topic/')
+        api.get('/notes'),
+        api.get('/topics')
       ]);
-      setNotes(notesRes.data.notes || []);
-      setTopics(topicsRes.data.topics || []);
+      setNotes(notesRes.data || []);
+      setTopics(topicsRes.data || []);
     } catch (e) {
       console.error(e);
     }
@@ -65,9 +65,9 @@ export default function NotesPage() {
       };
 
       if (editingNote) {
-        await api.put(`/notes/${editingNote.id}`, payload);
+        await api.put(`/notes/${editingNote._id || editingNote.id}`, payload);
       } else {
-        await api.post('/notes/', payload);
+        await api.post('/notes', payload);
       }
       setShowEditor(false);
       await loadData();
@@ -81,8 +81,8 @@ export default function NotesPage() {
     if (!confirm('Delete this note?')) return;
     try {
       await api.delete(`/notes/${id}`);
-      setNotes(notes.filter(n => n.id !== id));
-      if (editingNote?.id === id) setShowEditor(false);
+      setNotes(notes.filter(n => (n._id || n.id)?.toString() !== id?.toString()));
+      if ((editingNote?._id || editingNote?.id)?.toString() === id?.toString()) setShowEditor(false);
     } catch (e) {
       alert('Failed to delete note.');
     }
@@ -90,7 +90,7 @@ export default function NotesPage() {
 
   const handlePin = async (note) => {
     try {
-      await api.put(`/notes/${note.id}`, { is_pinned: !note.is_pinned });
+      await api.put(`/notes/${note._id || note.id}`, { is_pinned: !note.isPinned });
       await loadData();
     } catch (e) {
       console.error(e);
@@ -101,7 +101,7 @@ export default function NotesPage() {
     if (!editingNote) return;
     setEnhancing(true);
     try {
-      const res = await api.post(`/notes/${editingNote.id}/ai-enhance`, { action });
+      const res = await api.post(`/notes/${editingNote._id || editingNote.id}/enhance`);
       setContent(res.data.content || content);
       setEditingNote({ ...editingNote, content: res.data.content });
     } catch (e) {
@@ -236,11 +236,13 @@ export default function NotesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredNotes.map(note => (
-            <div key={note.id} className="glass-panel p-5 group hover:border-primary-500/30 transition-all">
+          {filteredNotes.map(note => {
+            const nid = note._id || note.id;
+            return (
+            <div key={nid} className="glass-panel p-5 group hover:border-primary-500/30 transition-all">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  {note.is_pinned && <Pin className="w-3.5 h-3.5 text-primary-400 shrink-0" />}
+                  {(note.isPinned || note.is_pinned) && <Pin className="w-3.5 h-3.5 text-primary-400 shrink-0" />}
                   <h3
                     className="font-semibold text-white truncate cursor-pointer hover:text-primary-300 transition-colors"
                     onClick={() => openEditNote(note)}
@@ -253,7 +255,7 @@ export default function NotesPage() {
                   <button onClick={() => openEditNote(note)} className="p-1.5 text-gray-500 hover:text-blue-400 transition-colors">
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(note.id)} className="p-1.5 text-gray-500 hover:text-red-400 transition-colors">
+                  <button onClick={() => handleDelete(nid)} className="p-1.5 text-gray-500 hover:text-red-400 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -268,23 +270,24 @@ export default function NotesPage() {
 
               <div
                 className="text-sm text-gray-400 line-clamp-3 cursor-pointer"
-                onClick={() => setExpandedId(expandedId === note.id ? null : note.id)}
+                onClick={() => setExpandedId(expandedId === nid ? null : nid)}
               >
                 {note.content ? (note.content.length > 150 ? note.content.substring(0, 150) + '...' : note.content) : 'Empty note'}
               </div>
 
-              {expandedId === note.id && note.content && (
+              {expandedId === nid && note.content && (
                 <div className="mt-3 pt-3 border-t border-gray-700/50 animate-fade-in max-h-[300px] overflow-y-auto">
                   <MarkdownRenderer content={note.content} />
                 </div>
               )}
 
               <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
-                <span>{note.updated_at ? new Date(note.updated_at).toLocaleDateString() : ''}</span>
+                <span>{note.updatedAt || note.updated_at ? new Date(note.updatedAt || note.updated_at).toLocaleDateString() : ''}</span>
                 <span>{note.content ? note.content.split(/\s+/).length : 0} words</span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

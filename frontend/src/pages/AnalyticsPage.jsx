@@ -8,9 +8,18 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/progress/analytics')
-      .then(res => setData(res.data))
-      .catch(err => console.error(err))
+    Promise.all([
+      api.get('/topics'),
+      api.get('/quiz/gaps'),
+      api.get('/progress/dashboard')
+    ]).then(([topicsRes, gapsRes, dashRes]) => {
+      setData({
+        topic_strengths: topicsRes.data || [],
+        quiz_history: [],
+        gaps: gapsRes.data || [],
+        stats: dashRes.data?.stats || {}
+      });
+    }).catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Loader2, Plus, UserPlus, PlayCircle, BookOpen, FileText, Calendar, Trash2, Clock, Brain, BarChart3 } from 'lucide-react';
+import { Users, Loader2, Plus, UserPlus, PlayCircle, BookOpen, FileText, Calendar, Trash2, Clock, Brain, BarChart3, UploadCloud, File } from 'lucide-react';
 import api from '../api/client';
 
 export default function ClassroomsPage() {
@@ -21,8 +21,10 @@ export default function ClassroomsPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   // Material add
-  const [matTitle, setMatTitle] = useState('');
+  const [matTitle, setMatTitle]     = useState('');
   const [matContent, setMatContent] = useState('');
+  const [matFile, setMatFile]       = useState(null);
+  const [uploadingMat, setUploadingMat] = useState(false);
 
   const navigate = useNavigate();
 
@@ -52,7 +54,7 @@ export default function ClassroomsPage() {
       setNewClassName(''); setNewClassSubject(''); setNewClassDesc(''); setNewClassSchedule('');
       await loadData();
     } catch (e) {
-      alert(e.response?.data?.detail || 'Failed to create classroom');
+      alert(e.response?.data?.message || 'Failed to create classroom');
     }
     setCreating(false);
   };
@@ -65,7 +67,7 @@ export default function ClassroomsPage() {
       setJoinCode('');
       await loadData();
     } catch (e) {
-      alert(e.response?.data?.detail || 'Failed to join classroom');
+      alert(e.response?.data?.message || 'Failed to join classroom');
     }
     setJoining(false);
   };
@@ -87,6 +89,24 @@ export default function ClassroomsPage() {
       setMatTitle(''); setMatContent('');
       loadClassDetail(selectedClass);
     } catch (e) { alert('Failed to add material'); }
+  };
+
+  const uploadMaterial = async () => {
+    if (!matFile || !selectedClass) return;
+    setUploadingMat(true);
+    const fm = new FormData();
+    fm.append('file', matFile);
+    try {
+      const res = await api.post(`/classrooms/${selectedClass}/materials/upload`, fm);
+      setMatFile(null);
+      const fi = document.getElementById('mat_file_input');
+      if (fi) fi.value = '';
+      alert(`✅ Uploaded! Pushed to ${res.data.pushed_to}.`);
+      loadClassDetail(selectedClass);
+    } catch (e) {
+      alert(e.response?.data?.message || 'Upload failed');
+    }
+    setUploadingMat(false);
   };
 
   const deleteMaterial = async (matId) => {
@@ -124,10 +144,12 @@ export default function ClassroomsPage() {
                 <p className="text-sm text-gray-500">No classes created yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {classrooms.teaching.map(c => (
-                    <div key={c.id} className={`p-4 rounded-xl border transition cursor-pointer ${
-                      selectedClass === c.id ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800/40 border-gray-700/50 hover:border-gray-600'
-                    }`} onClick={() => loadClassDetail(c.id)}>
+                  {classrooms.teaching.map(c => {
+                    const cid = c._id || c.id;
+                    return (
+                    <div key={cid} className={`p-4 rounded-xl border transition cursor-pointer ${
+                      selectedClass === cid ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800/40 border-gray-700/50 hover:border-gray-600'
+                    }`} onClick={() => loadClassDetail(cid)}>
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-semibold text-white flex items-center gap-2">
@@ -135,18 +157,18 @@ export default function ClassroomsPage() {
                             {c.subject && <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">{c.subject}</span>}
                           </h3>
                           <p className="text-xs text-gray-400 mt-1">
-                            Code: <span className="font-mono text-emerald-400">{c.join_code}</span>
+                            Code: <span className="font-mono text-emerald-400">{c.joinCode || c.join_code}</span>
                             {c.schedule && <span className="ml-2">📅 {c.schedule}</span>}
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Link to={`/classrooms/live/${c.id}`} className="primary-btn text-xs bg-emerald-600 hover:bg-emerald-500" onClick={e => e.stopPropagation()}>
+                          <Link to={`/classrooms/live/${cid}`} className="primary-btn text-xs bg-emerald-600 hover:bg-emerald-500" onClick={e => e.stopPropagation()}>
                             <PlayCircle className="w-4 h-4 mr-1" /> Go Live
                           </Link>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    </div>)
+                  })}
                 </div>
               )}
             </div>
@@ -161,21 +183,23 @@ export default function ClassroomsPage() {
               <p className="text-sm text-gray-500">No enrolled classes.</p>
             ) : (
               <div className="space-y-3">
-                {classrooms.enrolled.map(c => (
-                  <div key={c.id} className={`p-4 rounded-xl border transition cursor-pointer ${
-                    selectedClass === c.id ? 'bg-blue-500/10 border-blue-500/30' : 'bg-gray-800/40 border-gray-700/50 hover:border-gray-600'
-                  }`} onClick={() => loadClassDetail(c.id)}>
+                {classrooms.enrolled.map(c => {
+                  const cid = c._id || c.id;
+                  return (
+                  <div key={cid} className={`p-4 rounded-xl border transition cursor-pointer ${
+                    selectedClass === cid ? 'bg-blue-500/10 border-blue-500/30' : 'bg-gray-800/40 border-gray-700/50 hover:border-gray-600'
+                  }`} onClick={() => loadClassDetail(cid)}>
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-white">{c.name}</h3>
                         <p className="text-xs text-gray-400">{c.subject || c.description}</p>
                       </div>
-                      <Link to={`/classrooms/live/${c.id}`} className="primary-btn text-xs bg-blue-600 hover:bg-blue-500" onClick={e => e.stopPropagation()}>
+                      <Link to={`/classrooms/live/${cid}`} className="primary-btn text-xs bg-blue-600 hover:bg-blue-500" onClick={e => e.stopPropagation()}>
                         <PlayCircle className="w-4 h-4 mr-1" /> Join
                       </Link>
                     </div>
-                  </div>
-                ))}
+                  </div>)
+                })}
               </div>
             )}
           </div>
@@ -232,7 +256,7 @@ export default function ClassroomsPage() {
                               <p className="text-xs text-gray-500">{m.content?.substring(0, 80)}...</p>
                             </div>
                             {isTeacher && (
-                              <button onClick={() => deleteMaterial(m.id)} className="p-1 hover:bg-red-500/20 rounded text-red-400">
+                              <button onClick={() => deleteMaterial(m._id || m.id)} className="p-1 hover:bg-red-500/20 rounded text-red-400">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
@@ -243,15 +267,42 @@ export default function ClassroomsPage() {
 
                     {/* Add material (teacher only) */}
                     {isTeacher && (
-                      <div className="mt-3 space-y-2 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
-                        <input type="text" placeholder="Material title" className="input-field text-sm py-2" value={matTitle} onChange={e => setMatTitle(e.target.value)} />
-                        <textarea placeholder="Content or URL" className="input-field text-sm resize-none h-16" value={matContent} onChange={e => setMatContent(e.target.value)} />
-                        <button onClick={addMaterial} disabled={!matTitle} className="primary-btn text-xs">
-                          <Plus className="w-3 h-3 mr-1" /> Add Material
-                        </button>
+                      <div className="mt-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800 space-y-3">
+                        <p className="text-xs font-semibold text-gray-400 flex items-center gap-1">
+                          <UploadCloud className="w-3 h-3" /> Add Class Material
+                          <span className="ml-auto text-gray-600 font-normal">Pushed to all enrolled students</span>
+                        </p>
+                        {/* File upload */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Upload PDF or TXT (students get it in their Documents)</p>
+                          <div className="flex gap-2">
+                            <input type="file" id="mat_file_input" className="hidden" accept=".pdf,.txt"
+                              onChange={e => setMatFile(e.target.files[0])} />
+                            <button onClick={() => document.getElementById('mat_file_input').click()}
+                              className="secondary-btn text-xs flex items-center gap-1">
+                              <File className="w-3 h-3" /> {matFile ? matFile.name : 'Choose File'}
+                            </button>
+                            {matFile && (
+                              <button onClick={uploadMaterial} disabled={uploadingMat} className="primary-btn text-xs bg-emerald-600 hover:bg-emerald-500 border-emerald-500">
+                                {uploadingMat ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <UploadCloud className="w-3 h-3 mr-1" />}
+                                Upload & Push
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {/* Text note */}
+                        <div className="border-t border-gray-800 pt-3">
+                          <p className="text-xs text-gray-500 mb-1">Or add a text note / link</p>
+                          <input type="text" placeholder="Title" className="input-field text-xs py-1.5 mb-2" value={matTitle} onChange={e => setMatTitle(e.target.value)} />
+                          <textarea placeholder="Content or URL" className="input-field text-xs resize-none h-14" value={matContent} onChange={e => setMatContent(e.target.value)} />
+                          <button onClick={addMaterial} disabled={!matTitle} className="primary-btn text-xs mt-2">
+                            <Plus className="w-3 h-3 mr-1" /> Add Note
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
+
 
                   {/* Students */}
                   {isTeacher && classDetail.students.length > 0 && (

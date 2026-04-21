@@ -8,8 +8,8 @@ export default function GapsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/progress/gaps')
-      .then(res => setGaps(res.data.gaps || []))
+    api.get('/quiz/gaps')
+      .then(res => setGaps(res.data || []))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
@@ -46,7 +46,7 @@ export default function GapsPage() {
           </div>
 
           {gaps.map(gap => (
-            <div key={gap.id} className="glass-panel p-5 hover:border-primary-500/30 transition-all">
+            <div key={gap._id || gap.id} className="glass-panel p-5 hover:border-primary-500/30 transition-all">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -54,14 +54,14 @@ export default function GapsPage() {
                   </div>
                   <div>
                     <p className="text-gray-200 font-medium">{gap.description}</p>
-                    {gap.suggested_topic && (
+                    {(gap.suggested_topic || gap.suggestedTopic) && (
                       <p className="text-sm text-gray-400 mt-2">
-                        💡 Suggested: Study <span className="text-primary-400 font-medium">{gap.suggested_topic}</span>
+                        💡 Suggested: Study <span className="text-primary-400 font-medium">{gap.suggested_topic || gap.suggestedTopic}</span>
                       </p>
                     )}
                   </div>
                 </div>
-                {gap.suggested_topic && (
+                {(gap.suggested_topic || gap.suggestedTopic) && (
                   <Link to="/topics" className="secondary-btn flex items-center gap-1 text-xs shrink-0">
                     Study <ArrowRight className="w-3 h-3" />
                   </Link>

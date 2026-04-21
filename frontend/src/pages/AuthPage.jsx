@@ -17,16 +17,11 @@ export default function AuthPage({ onLogin }) {
       if (!isLogin) {
         await api.post('/auth/signup', { email, password });
       }
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-      const res = await api.post('/auth/login', formData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
+      const res = await api.post('/auth/login', { email, password });
       localStorage.setItem('token', res.data.access_token);
       onLogin(res.data.access_token);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Authentication failed. Please try again.');
+      setError(err.response?.data?.message || 'Authentication failed. Please try again.');
     }
     setLoading(false);
   };

@@ -15,7 +15,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
 
     // Load smart notifications
-    api.get('/class-analytics/student')
+    api.get('/analytics/student')
       .then(res => setReminders(res.data.reminders || []))
       .catch(() => {});
   }, []);

@@ -22,16 +22,23 @@ export default function FlashcardsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [topicsRes, cardsRes, dueRes, statsRes] = await Promise.all([
-        api.get('/topic/'),
-        api.get('/flashcards/'),
+      const [topicsRes, cardsRes, dueRes] = await Promise.all([
+        api.get('/topics'),
+        api.get('/flashcards'),
         api.get('/flashcards/due'),
-        api.get('/flashcards/stats')
       ]);
-      setTopics(topicsRes.data.topics || []);
-      setFlashcards(cardsRes.data.flashcards || []);
-      setDueCards(dueRes.data.flashcards || []);
-      setStats(statsRes.data);
+      setTopics(topicsRes.data || []);
+      setFlashcards(cardsRes.data || []);
+      setDueCards(dueRes.data || []);
+      // Compute stats locally
+      const all = cardsRes.data || [];
+      const due = dueRes.data || [];
+      setStats(all.length > 0 ? {
+        total: all.length,
+        due: due.length,
+        learning: all.filter(c => c.repetitions > 0 && c.repetitions < 5).length,
+        mastered: all.filter(c => c.repetitions >= 5).length
+      } : null);
     } catch (e) {
       console.error(e);
     }
@@ -60,7 +67,7 @@ export default function FlashcardsPage() {
   const handleReview = async (quality) => {
     const card = dueCards[currentIndex];
     try {
-      await api.put(`/flashcards/${card.id}/review`, { quality });
+      await api.put(`/flashcards/${card._id || card.id}/review`, { quality });
       setSessionScore(prev => ({
         total: prev.total + 1,
         correct: quality >= 2 ? prev.correct + 1 : prev.correct
@@ -253,8 +260,8 @@ export default function FlashcardsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {topics.map(topic => (
               <button
-                key={topic.id}
-                onClick={() => handleGenerate(topic.id)}
+                key={topic._id || topic.id}
+                onClick={() => handleGenerate(topic._id || topic.id)}
                 disabled={generating}
                 className="p-4 bg-gray-800/40 rounded-xl border border-gray-700/50 hover:border-primary-500/30 transition-all text-left group"
               >
@@ -280,7 +287,7 @@ export default function FlashcardsPage() {
           </h2>
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {flashcards.map(card => (
-              <div key={card.id} className="flex items-center justify-between p-3 bg-gray-800/40 rounded-xl border border-gray-700/30 group hover:border-gray-600/50 transition-all">
+              <div key={card._id || card.id} className="flex items-center justify-between p-3 bg-gray-800/40 rounded-xl border border-gray-700/30 group hover:border-gray-600/50 transition-all">
                 <div className="flex-1 min-w-0 mr-4">
                   <p className="text-sm text-gray-200 truncate">{card.front}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -293,7 +300,7 @@ export default function FlashcardsPage() {
                     <span className="text-xs text-gray-600">Rep: {card.repetitions}</span>
                   </div>
                 </div>
-                <button onClick={() => handleDelete(card.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                <button onClick={() => handleDelete(card._id || card.id)} className="p-1.5 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>

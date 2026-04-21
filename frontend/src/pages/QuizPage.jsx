@@ -17,12 +17,12 @@ export default function QuizPage() {
   const [score, setScore] = useState(null);
 
   useEffect(() => {
-    api.get('/topic/')
+    api.get('/topics')
       .then(res => {
-        const t = res.data.topics || [];
+        const t = res.data || [];
         setTopics(t);
         if (topicIdParam) {
-          const target = t.find(x => x.id === parseInt(topicIdParam));
+          const target = t.find(x => (x._id || x.id)?.toString() === topicIdParam);
           if (target) loadQuiz(target);
         }
       })
@@ -38,8 +38,15 @@ export default function QuizPage() {
     setSubmitted(false);
     setScore(null);
     try {
-      const res = await api.post('/quiz/generate', { topic_id: topic.id });
-      setQuiz(res.data.quiz);
+      const res = await api.post('/quiz/generate', { topic_id: topic._id || topic.id });
+      // MERN returns [{question, options, correct, explanation}]
+      const questions = (res.data.quiz || []).map(q => ({
+        text: q.question,
+        options: q.options,
+        correct_answer_index: q.correct,
+        explanation: q.explanation
+      }));
+      setQuiz({ questions });
     } catch (e) {
       alert('Failed to generate quiz.');
     }
@@ -59,7 +66,7 @@ export default function QuizPage() {
 
     try {
       await api.post('/quiz/submit', {
-        topic_id: selectedTopic.id,
+        topic_id: selectedTopic._id || selectedTopic.id,
         score: correct,
         total_questions: quiz.questions.length
       });
@@ -226,7 +233,7 @@ export default function QuizPage() {
                       topic.status === 'Weak' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                       'bg-gray-600/20 text-gray-400 border-gray-600/30'
                     }`}>{topic.status}</span>
-                    <span className="text-xs text-gray-500">{topic.subtopic_count} subtopics</span>
+                    <span className="text-xs text-gray-500">{topic.subtopics?.length || 0} subtopics</span>
                   </div>
                 </div>
                 <Brain className="w-6 h-6 text-gray-600 group-hover:text-primary-400 transition-colors" />

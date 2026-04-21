@@ -10,8 +10,8 @@ export default function TopicsPage() {
   const [generating, setGenerating] = useState(false);
 
   const fetchTopics = () => {
-    api.get('/topic/')
-      .then(res => setTopics(res.data.topics || []))
+    api.get('/topics')
+      .then(res => setTopics(res.data || []))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
@@ -22,7 +22,7 @@ export default function TopicsPage() {
     if (!newTopic.trim() || generating) return;
     setGenerating(true);
     try {
-      await api.post('/topic/generate-subtopics', { title: newTopic });
+      await api.post('/topics', { title: newTopic });
       setNewTopic('');
       fetchTopics();
     } catch (e) {
@@ -36,8 +36,8 @@ export default function TopicsPage() {
     e.stopPropagation();
     if (!confirm('Delete this topic and all its subtopics?')) return;
     try {
-      await api.delete(`/topic/${id}`);
-      setTopics(topics.filter(t => t.id !== id));
+      await api.delete(`/topics/${id}`);
+      setTopics(topics.filter(t => (t._id || t.id) !== id));
     } catch (e) {
       alert('Failed to delete topic.');
     }
@@ -99,8 +99,9 @@ export default function TopicsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {topics.map(topic => {
             const status = statusConfig[topic.status] || statusConfig.Neutral;
+            const tid = topic._id || topic.id;
             return (
-              <Link key={topic.id} to={`/topics/${topic.id}`} className="glass-panel p-5 group hover:border-primary-500/30 transition-all block">
+              <Link key={tid} to={`/topics/${tid}`} className="glass-panel p-5 group hover:border-primary-500/30 transition-all block">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <span className="text-lg shrink-0">{status.icon}</span>
@@ -108,12 +109,12 @@ export default function TopicsPage() {
                       <h3 className="font-semibold text-white group-hover:text-primary-300 transition-colors truncate">{topic.title}</h3>
                       <div className="flex items-center gap-3 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${status.color}`}>{topic.status}</span>
-                        <span className="text-xs text-gray-500">{topic.subtopic_count} subtopics</span>
+                        <span className="text-xs text-gray-500">{topic.subtopics?.length || 0} subtopics</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={(e) => handleDelete(topic.id, e)} className="p-2 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                    <button onClick={(e) => handleDelete(tid, e)} className="p-2 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
                       <Trash2 className="w-4 h-4" />
                     </button>
                     <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-primary-400 transition-colors" />

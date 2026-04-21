@@ -12,7 +12,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     api.get('/chat/history')
-      .then(res => setMessages(res.data.messages || []))
+      .then(res => setMessages(res.data || []))
       .catch(() => { })
       .finally(() => setHistoryLoading(false));
   }, []);
@@ -30,11 +30,11 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await api.post('/chat/', { message: userMsg });
-      setMessages(prev => {
-        const withoutOptimistic = prev.slice(0, -1);
-        return [...withoutOptimistic, res.data.user_message, res.data.ai_message];
-      });
+      const res = await api.post('/chat', { message: userMsg });
+      setMessages(prev => [...prev.slice(0, -1), 
+        { role: 'user', content: userMsg, id: Date.now() + 'u' },
+        { role: 'assistant', content: res.data.content, id: res.data.id || Date.now() }
+      ]);
     } catch (e) {
       setMessages(prev => [...prev, {
         role: 'assistant',
